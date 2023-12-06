@@ -2,24 +2,27 @@ import sys
 
 def get_digit(s:str):
     if s[0] in "0123456789":
-        return int(s[0])
-    return None
+        return int(s[0]),1
+    # return None
     names = ["zero","one","two","three","four","five","six","seven","eight","nine"]
     for index,value in enumerate(names):
         if s.startswith(value):
-            return index
-    return None
+            return index, len(value)
+    return None,1
 
 def code(l:str):
     first = None
     last = None
     l = l.strip().lower()
-    for i in range(0,len(l)):
-        digit = get_digit(l[i:])
+    i = 0
+    while i < len(l):
+        digit,skip = get_digit(l[i:])
+        i += skip
         if digit is not None:
             if first is None:
                 first = digit
             last = digit
+    assert first is not None
     result = 10*first+last
 
     print(f"line:  {l}  {first=}, {last=}, {result=}")
