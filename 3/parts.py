@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-# This gives 332309 and web page says it is too low.
+# This gives 529964 and web page says it is too high.
+# previously got 332309 and web page says it was too low.
 
 import sys
 from typing import List, Set
@@ -13,49 +14,41 @@ def check_symbol(x):
             return True
     return False
 
-def simple_scan(raw1, raw2) -> Set:
-    line1 = f".{raw1}." # very lazy edges
-    line2 = f".{raw2}."
-    parts = set()
+def scan_parts(a, b, c) -> List:
+    above = f".{a}." # very lazy edges
+    here = f".{b}." # very lazy edges
+    below = f".{c}." # very lazy edges
+    parts = list()
     number = ""
     is_part = False
-    for i,c in enumerate(line1):
+    for i,c in enumerate(here):
         if c in digits:
             number = number+c # may or may not be a part number
-            is_part |= check_symbol([line1[i-1], line1[i+1], line2[i-1], line2[i], line2[i+1]])
+            is_part |= check_symbol([above[i-1], above[i], above[i+1], here[i-1], here[i+1], below[i-1], below[i], below[i+1]])
         else:
             if number:
                 if is_part:
                     if int(number) in parts:
                         print(f"A multi-part {number}")
-                    parts.add(int(number))
+                    parts.append(int(number))
                 number = ""
                 is_part = False
     if number:
         if is_part:
             if int(number) in parts:
                 print(f"B multi-part {number}")
-            parts.add(int(number))
+            parts.append(int(number))
     return parts
 
 
-def scan_parts(line1, line2) -> Set:
-    found = simple_scan(line1, line2)
-    f2 = simple_scan(line2, line1)
-    if found.intersection(f2):
-        print(f"APart intersection {found}, {f2}")
-    return found.union(f2)
-
 def part_numbers(matrix) -> List:
-    parts = set()
+    parts = list()
     blank = "." * len(matrix[0])
     for i, line in enumerate(matrix):
         assert len(line) == len(matrix[0])
-        found = scan_parts(line, matrix[i+1] if i+1 < len(matrix) else blank)
-        if parts.intersection(found):
-            print(f"duplicate part {parts.intersection(found)}")
-        parts = parts.union(found)  # assumes part number 123 is only counted once no matter how many times it shows in the schematic
-    return sorted(list(parts))
+        found = scan_parts(blank if i == 0 else matrix[i-1], line, blank if i+1 == len(matrix) else matrix[i+1])
+        parts.extend(found)
+    return sorted(parts)
 
 
 def test():
@@ -71,9 +64,9 @@ def test():
     check_part_numbers(["123."], [])
     check_part_numbers([".123!."], [123])
     check_part_numbers([".#123"], [123])
-    check_part_numbers([".#123$"], [123])
-    check_part_numbers([".#123$123."], [123])
-    check_part_numbers([".#123..$123."], [123])
+    check_part_numbers([".#123$"], [123])  # ambiguity here -- is this 1 part number or 2? let's try to catch it
+    check_part_numbers([".#123$123."], [123, 123])
+    check_part_numbers([".#123..$123."], [123, 123])
     check_part_numbers(["123#456"], [123,456])
     check_part_numbers(["123#%456.345"], [123,456])
     check_part_numbers(["325.123#%456.345"], [123,456])
@@ -100,7 +93,17 @@ def test():
         assert parts == i[1], f"found {parts}, expected {i[1]}"
         swapped = [i[0][1], i[0][0]]
         parts = part_numbers(swapped)
-        assert parts == i[1], f"(swapped) found {parts}, expected {i[1]}"
+        assert parts == i[1], f"(swapped) {swapped=}  found {parts}, expected {i[1]}"
+
+    # above, below, diagonal
+    inputs = [(
+        ["123...456",
+         "^789.*222",
+         "123...123"], [123,123,123,222,456,789])
+    ]
+    for i in inputs:
+        parts = part_numbers(i[0])
+        assert parts == i[1], f"found {parts}, expected {i[1]}"
 
     print("Test passed")
 
