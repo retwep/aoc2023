@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# This gives 332309 and web page says it is too low.
+
 import sys
 from typing import List, Set
 
@@ -23,19 +26,25 @@ def simple_scan(raw1, raw2) -> Set:
         else:
             if number:
                 if is_part:
+                    if int(number) in parts:
+                        print(f"A multi-part {number}")
                     parts.add(int(number))
                 number = ""
                 is_part = False
     if number:
         if is_part:
+            if int(number) in parts:
+                print(f"B multi-part {number}")
             parts.add(int(number))
     return parts
 
 
 def scan_parts(line1, line2) -> Set:
     found = simple_scan(line1, line2)
-    found = found.union(simple_scan(line2, line1))
-    return found
+    f2 = simple_scan(line2, line1)
+    if found.intersection(f2):
+        print(f"APart intersection {found}, {f2}")
+    return found.union(f2)
 
 def part_numbers(matrix) -> List:
     parts = set()
@@ -43,12 +52,15 @@ def part_numbers(matrix) -> List:
     for i, line in enumerate(matrix):
         assert len(line) == len(matrix[0])
         found = scan_parts(line, matrix[i+1] if i+1 < len(matrix) else blank)
+        if parts.intersection(found):
+            print(f"duplicate part {parts.intersection(found)}")
         parts = parts.union(found)  # assumes part number 123 is only counted once no matter how many times it shows in the schematic
     return sorted(list(parts))
 
 
 def test():
     def check_part_numbers(raw, expected):
+        print(raw)
         parts = part_numbers(raw)
         assert parts == expected, f"{raw=}  {parts} != {expected}"
 
