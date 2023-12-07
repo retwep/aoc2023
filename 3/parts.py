@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-# This gives 529964 and web page says it is too high.
-# previously got 332309 and web page says it was too low.
+# submission 3: 528819 was correct for part 1
+# submission 2: gives 529964 and web page says it is too high.
+# submission 1: previously got 332309 and web page says it was too low.
 
 import sys
 from typing import List, Set
@@ -11,8 +12,8 @@ digits = "0123456789"
 def check_symbol(x):
     for c in x:
         if c not in digits and c != ".":
-            return True
-    return False
+            return c
+    return ''
 
 def scan_parts(a, b, c) -> List:
     above = f".{a}." # very lazy edges
@@ -21,20 +22,29 @@ def scan_parts(a, b, c) -> List:
     parts = list()
     number = ""
     is_part = False
+    symbols = set()
     for i,c in enumerate(here):
         if c in digits:
             number = number+c # may or may not be a part number
-            is_part |= check_symbol([above[i-1], above[i], above[i+1], here[i-1], here[i+1], below[i-1], below[i], below[i+1]])
+            cs = check_symbol([above[i-1], above[i], above[i+1], here[i-1], here[i+1], below[i-1], below[i], below[i+1]])
+            is_part |= bool(cs)
+            if cs:
+                symbols.add(cs) # something weird going on - look for numbers with more than one symbol (not a perfect check, but simple to start)
         else:
             if number:
                 if is_part:
+                    if len(symbols) > 1:
+                        print(f"Multi-symbol: {symbols=}")
                     if int(number) in parts:
                         print(f"A multi-part {number}")
                     parts.append(int(number))
+                symbols = set()
                 number = ""
                 is_part = False
     if number:
         if is_part:
+            if len(symbols) > 1:
+                print(f"Multi-symbol: {symbols=}")
             if int(number) in parts:
                 print(f"B multi-part {number}")
             parts.append(int(number))
@@ -105,6 +115,18 @@ def test():
         parts = part_numbers(i[0])
         assert parts == i[1], f"found {parts}, expected {i[1]}"
 
+    # check for only single count if only single part
+    for i in range(0,9):
+        x = list("."*9)
+        x[i] = "#"
+        x[4] = "7"
+        matrix = ["".join(x[0:3]),"".join(x[3:6]),"".join(x[6:9])]
+        parts = part_numbers(matrix)
+        expected = [] if i == 4 else [7]
+        if parts != expected:
+            print(f"FAIL: {matrix=}, {parts=}, {expected=}")
+            assert False
+
     print("Test passed")
 
 def main():
@@ -113,7 +135,8 @@ def main():
         return
     filename = sys.argv[1]
     with open(filename, "r") as f:
-        schematic = f.readlines()
+        raw_lines = f.readlines()
+    schematic = [r.strip() for r in raw_lines]
     parts = part_numbers(schematic)
     part_sum = sum(parts)
     print(f"{part_sum=}")
