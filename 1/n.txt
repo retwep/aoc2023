@@ -17,4 +17,12 @@ six
 seven
 eight
 nine
-sevenine
+sevenineight
+eighthree
+twone
+
+nineight
+nineeight
+zeroone
+zerone
+

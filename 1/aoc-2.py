@@ -3,7 +3,7 @@ import sys
 def get_digit(s:str):
     if s[0] in "0123456789":
         return int(s[0]),1
-    return None,1  # without see below, with 54338
+    # return None,1  # without see below, with 54338
     names = ["zero","one","two","three","four","five","six","seven","eight","nine"]
     for index,value in enumerate(names):
         if s.startswith(value):
