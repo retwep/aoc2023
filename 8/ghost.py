@@ -5,8 +5,11 @@
 import sys
 from typing import Dict, List, Tuple
 
-def navigate(turns:str, map:Dict[str,Dict[str,str]]) -> int:
+def navigate(turns:str, map:Dict[str,Dict[str,str]], forced = None) -> int:
     ghosts = [key for key in map.keys() if key.endswith("A")]
+    if forced:
+        ghosts = forced
+
     print(f"There are {len(ghosts)} : {ghosts=}")
     def done(ghosts):
         return all(g.endswith("Z") for g in ghosts)
@@ -18,7 +21,7 @@ def navigate(turns:str, map:Dict[str,Dict[str,str]]) -> int:
         count += 1
         for n in range(0, len(ghosts)):
             ghosts[n] = map[ghosts[n]][turn]
-        print(f"{count} : {ghosts=}")
+        #print(f"{count} : {ghosts=}")
         
     return count
 
@@ -66,6 +69,46 @@ def main():
         raw_lines = f.readlines()
     lines = [r.strip() for r in raw_lines]
     d,m = load_map(lines)
+    
+    # ok, here's a major spoiler -- it was taking so long to finish that I started looking at what I can learn.
+    # path length in single terms for each of the ghosts
+    print(f"{navigate(d,m,['AAA'])}")
+    print(f"{navigate(d,m,['FXA'])}")
+    print(f"{navigate(d,m,['KNA'])}")
+    print(f"{navigate(d,m,['QXA'])}")
+    print(f"{navigate(d,m,['JVA'])}")
+    print(f"{navigate(d,m,['FSA'])}")
+
+    # path length in pairwise terms for each of the ghosts
+    print(f"{navigate(d,m,['AAA','FXA'])}")
+    print(f"{navigate(d,m,['FXA','KNA'])}")
+    print(f"{navigate(d,m,['KNA','QXA'])}")
+    print(f"{navigate(d,m,['QXA','JVA'])}")
+    print(f"{navigate(d,m,['JVA','FSA'])}")
+    print(f"{navigate(d,m,['FSA','AAA'])}")
+    
+    # path length in triples terms for each of the ghosts
+    print(f"{navigate(d,m,['AAA','FXA','KNA'])}")
+    print(f"{navigate(d,m,['FXA','KNA','QXA'])}")
+    print(f"{navigate(d,m,['KNA','QXA','JVA'])}")
+    print(f"{navigate(d,m,['QXA','JVA','FSA'])}")
+    print(f"{navigate(d,m,['JVA','FSA','AAA'])}")
+    print(f"{navigate(d,m,['FSA','AAA','FXA'])}")
+
+    # by this point you should realize there is an analytical solution -- figure out the
+    # unique factors of the single path length, then multiply them together from each of the ghosts
+    # I didn't code that part, but got 
+    # 1, 43, 281, 12083
+    # 1, 47, 281, 13207
+    # 1, 79, 281, 22199
+    # 1, 61, 281, 17141
+    # 1, 67, 281, 18827
+    # 1, 73, 281, 20513
+    #
+    # which if you multiply the prime factors together you get:
+    print("The analytical answer is ", 43*47*79*61*67*73*281)
+    # of course this was by hand and not by program, does that count?
+
     turns = navigate(d,m)
     print(f"map took {turns=}")
 
