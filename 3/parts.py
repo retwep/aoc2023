@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
+# part2 submission 1: 80403602 was correct
+
 # submission 3: 528819 was correct for part 1
 # submission 2: gives 529964 and web page says it is too high.
 # submission 1: previously got 332309 and web page says it was too low.
 
 import sys
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 digits = "0123456789"
 
@@ -48,34 +50,38 @@ class PartNumber:
     def is_part(self):
         return any(self.symbols)
 
-    def scan_around_for_symbols(self, symbols):
+    def scan_around_for_symbols(self, symbols:Dict[str, Symbol]):
         left = self.col - 1
         right = self.col + self.width
-        def generate_symbol(m:List[str], row:int, col:int):
-            nonlocal self
+        def identify_symbol(m:List[str], row:int, col:int):
+            nonlocal self, symbols
             s = check_symbol(m[row][col])
             if s:
-                symbol = Symbol(m, row, col, s)
-                self.symbols.append(symbol)
+                key = f"{row}x{col}"
+                symbol = symbols.get(key)
+                if not symbol:
+                    symbol = Symbol(m, row, col, s)
+                    symbols[key] = symbol
                 symbol.add_number(self)
+                self.symbols.append(symbol) # required to know if this is a part
                 return symbol
             return None
 
         # row above
         for c in range(left, right+1):
-            generate_symbol(self.matrix, self.row-1, c)
+            identify_symbol(self.matrix, self.row-1, c)
 
         # left/right
-        generate_symbol(self.matrix, self.row, left)
-        generate_symbol(self.matrix, self.row, right)
+        identify_symbol(self.matrix, self.row, left)
+        identify_symbol(self.matrix, self.row, right)
 
         # row below
         for c in range(left, right+1):
-            generate_symbol(self.matrix, self.row+1, c)
+            identify_symbol(self.matrix, self.row+1, c)
 
 
     @staticmethod
-    def parse_number(matrix:List[str], row:int, col:int, numbers:List["PartNumber"], symbols:List[Symbol]) -> int:
+    def parse_number(matrix:List[str], row:int, col:int, numbers:List["PartNumber"], symbols:Dict[str,Symbol]) -> int:
         width = 1
         while matrix[row][col+width] in digits:
             width += 1
@@ -85,12 +91,12 @@ class PartNumber:
         number.scan_around_for_symbols(symbols)
         return width
 
-def scan_the_matrix(matrix:List[str]) -> Tuple[List[PartNumber], List[Symbol]]:
+def scan_the_matrix(matrix:List[str]) -> Tuple[List[PartNumber], Dict[str,Symbol]]:
     part_numbers = list()
-    symbols = list()
+    symbols = dict()
 
     lm0 = len(matrix[0])
-    row = 0
+    row = 1
     while row < len(matrix) - 1: # reduced because matrix was padded and we don't need to scan bottom line
         col = 1 # skip padding
         while col < lm0 - 1:
@@ -178,6 +184,9 @@ def test():
         matrix = ["".join(x[0:3]),"".join(x[3:6]),"".join(x[6:9])]
         expected = [] if i == 4 else [7]
         check_part_numbers(matrix, expected)
+        p,s = scan_the_matrix(matrix)
+        assert len(p) == 1
+        assert len(s) == (0 if i == 4 else 1)
 
     print("Test passed")
 
@@ -193,9 +202,12 @@ def main():
     numbers, symbols = scan_the_matrix(schematic)
     parts = sorted([p.value for p in numbers if p.is_part()])
     part_sum = sum(parts)
-    print(f"{part_sum=}")
-    gears = [s for s in symbols if s.is_gear()]
-    
+    print(f"{parts=}, {part_sum=}")
+    gears = [v for v in symbols.values() if v.is_gear()]
+    ratios = [g.numbers[0].value * g.numbers[1].value for g in gears]
+    print(f"{ratios=}")
+    gear_sum = sum(ratios)
+    print(f"{gear_sum=}")
 
 if __name__=="__main__":
     main()
