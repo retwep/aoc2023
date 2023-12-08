@@ -5,10 +5,6 @@
 import sys
 from typing import Dict, List, Tuple
 
-def output(count, here):
-    if count % 1000 == 0:
-        print(f"{count=}, {here=}\r", end='')
-
 def navigate(turns:str, map:Dict[str,Dict[str,str]]) -> int:
     tm = len(turns)
     count = 0
@@ -18,8 +14,6 @@ def navigate(turns:str, map:Dict[str,Dict[str,str]]) -> int:
         turn = turns[count % tm]
         count += 1
         here = map[here][turn]
-        output(count, here)
-    print()
     return count
 
 def load_map(lines:List[str]) -> Tuple[str,Dict[str,Dict[str,str]]]:
