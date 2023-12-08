@@ -1,16 +1,25 @@
 #!/usr/bin/env python
 
+# part1 submission 1 12083
+
 import sys
 from typing import Dict, List, Tuple
+
+def output(count, here):
+    if count % 1000 == 0:
+        print(f"{count=}, {here=}\r", end='')
 
 def navigate(turns:str, map:Dict[str,Dict[str,str]]) -> int:
     tm = len(turns)
     count = 0
-    here = next(iter(map))
+    here = "AAA"
+
     while here != "ZZZ":
         turn = turns[count % tm]
         count += 1
         here = map[here][turn]
+        output(count, here)
+    print()
     return count
 
 def load_map(lines:List[str]) -> Tuple[str,Dict[str,Dict[str,str]]]:
@@ -22,17 +31,30 @@ def load_map(lines:List[str]) -> Tuple[str,Dict[str,Dict[str,str]]]:
         t = t.split(',')
         left = t[0][1:]
         right = t[1].strip()[:-1]
+        assert key not in map
         map[key] = {"L":left,"R":right}
+    print(f"Map has {len(directions)} turns and {len(map)} keys")
     return directions, map
 
 def test():
-    d,m = load_map(["L", "", "A = (ZZZ,AAA)"])
+    d,m = load_map(["L", "", "AAA = (ZZZ,AAA)"])
     assert d == "L"
-    assert m == {"A": {"L": "ZZZ", "R":"AAA"}}
+    assert m == {"AAA": {"L": "ZZZ", "R":"AAA"}}
 
     turns = navigate(d, m)
     assert turns == 1
-    
+    d = "LLR"
+    m = {"AAA": {"L":"B", "R":"Z"},
+         "B": {"L":"C", "R":"Z"},
+         "C": {"L":"Z", "R":"D"},
+         "D": {"L":"E", "R":"Z"},
+         "E": {"L":"F", "R":"Z"},
+         "F": {"L":"Z", "R":"ZZZ"},
+         "Z": {"L":"Z", "R":"Z"},
+         }
+    turns = navigate(d,m)
+    assert turns == 6
+
     print("Test passed")
 
 def main():
