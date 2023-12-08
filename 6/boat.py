@@ -2,6 +2,9 @@
 
 import sys
 
+# part1 = 281600
+# part2 = [33875953]
+
 def boat_race(push, limit):
     travel = limit - push
     speed = push
@@ -16,9 +19,14 @@ def count_win_variations(total_time, distance_to_beat):
             win_count += 1
     return win_count
 
-def all_races(lines):
-    times = [int(x) for x in lines[0].split(" ")[1:] if x != ""]
-    distances = [int(x) for x in lines[1].split(" ")[1:] if x != ""]
+def all_races(lines, no_spaces):
+    if no_spaces:
+        times = [int("".join(lines[0].split(" ")[1:]))]
+        distances = [int("".join(lines[1].split(" ")[1:]))]
+    else:
+        times = [int(x) for x in lines[0].split(" ")[1:] if x != ""]
+        distances = [int(x) for x in lines[1].split(" ")[1:] if x != ""]
+
     wins = list()
     for t,d in zip(times,distances):
         wins.append(count_win_variations(t,d))
@@ -56,9 +64,11 @@ def main():
     with open(filename, "r") as f:
         raw_lines = f.readlines()
     lines = [r.strip() for r in raw_lines]
-    wins = all_races(lines)
+    wins = all_races(lines,False)
     result = product(wins)
-    print(f"{result=}")
+    print(f"part1 = {result}")
+    wins_ns = all_races(lines, True)
+    print(f"part2 = {wins_ns}")
 
 if __name__=="__main__":
     main()
