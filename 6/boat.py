@@ -17,23 +17,36 @@ def count_win_variations(total_time, distance_to_beat):
     return win_count
 
 def all_races(lines):
-    times = lines[0].split(" ")[1:]
-    distances = lines[1].split(" ")[1:]
+    times = [int(x) for x in lines[0].split(" ")[1:] if x != ""]
+    distances = [int(x) for x in lines[1].split(" ")[1:] if x != ""]
     wins = list()
     for t,d in zip(times,distances):
         wins.append(count_win_variations(t,d))
     return wins
 
+def product(items):
+    if len(items) == 0:
+        return 0
+    p = items[0]
+    for i in items[1:]:
+        p *= i
+    return p
+
 def test():
+    assert product([]) == 0
+    assert product([2]) == 2
+    assert product([3,4]) == 12
+
     for race in [(1,1,0), (1,2,1), (3,5,6)]:
         d = boat_race(race[0], race[1])
         assert  d == race[2], f"{d=}, {race=}"
 
-    for t,d,w in [(2,1,1), (1,1,0), (7,9, 4),(15,40,8),(30,200,9)]:
+    for t,d,w in [(3,1,2), (1,1,0), (7,9,4), (15,40,8), (30,200,9)]:
         wins = count_win_variations(t,d)
         assert wins == w, f"Failed: {t=}, {d=}, {w=}, {wins=}"
 
     print("Test passed")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -44,7 +57,7 @@ def main():
         raw_lines = f.readlines()
     lines = [r.strip() for r in raw_lines]
     wins = all_races(lines)
-    result = prod(wins)
+    result = product(wins)
     print(f"{result=}")
 
 if __name__=="__main__":
