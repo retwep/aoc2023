@@ -15,6 +15,33 @@ def check_symbol(x):
             return c
     return ''
 
+def check_gear(tl,tc,tr, l, r, bl, bc, br):
+    # This identifies a gear, but doesn't give the numbers.
+    # need a solution that gives the numbers associated with a gear.
+    # Refactor to full OO with x/y coords and gear<-->partnumber references?
+    # or scan adjacent for part numbers and accumulate them?
+
+    def zero_or_one_or_two(a,b,c):
+        if b in digits:
+            #  12.  .23  123
+            return 1
+        if a in digits and c in digits:
+            # 1.3
+            return 2
+        if a in digits or b in digits or c in digits:
+            # 1..  .2.  ..3
+            return 1
+        # ...
+        return 0 
+    count = zero_or_one_or_two(tl, tc, tr)
+    count += zero_or_one_or_two(bl, bc, br)
+    count += 1 if l in digits else 0
+    count += 1 if r in digits else 0
+    if count == 2:
+        return True # this is a gear, but what about the part numbers?
+    return False
+        
+
 def scan_parts(a, b, c) -> List:
     above = f".{a}." # very lazy edges
     here = f".{b}." # very lazy edges
@@ -23,7 +50,11 @@ def scan_parts(a, b, c) -> List:
     number = ""
     is_part = False
     symbols = set()
-    for i,c in enumerate(here):
+    for i,c in enumerate(here): 
+        if c == "*":
+            if check_gear(above[i-1], above[i], above[i+1], here[i-1], here[i+1], below[i-1], below[i], below[i+1]):
+                print(f"Found a gear! What do we do about it?\n{above}\n{here}\n{below}")
+
         if c in digits:
             number = number+c # may or may not be a part number
             cs = check_symbol([above[i-1], above[i], above[i+1], here[i-1], here[i+1], below[i-1], below[i], below[i+1]])
