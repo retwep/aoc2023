@@ -40,6 +40,34 @@ def test():
 
     print("Test passed")
 
+def parse_lines(lines:List[str]) -> Tuple[List[int], List[Map]]:
+    assert "seeds" in lines[0]
+    raw_seeds = lines[0].split(" ")
+    seeds = [int(v) for v in raw_seeds[1:] if v != ""]
+
+    maps = list()
+    map_data = list()
+    name = ""
+    def add_map():
+        nonlocal maps, name, map_data
+        if map_data:
+            map = Map(name, map_data)
+            maps.append(map)
+            map_data = list()
+            name = ""
+        
+    for line in lines[1:]:
+        if "map" in line:
+            add_map()
+            name = line.split(" ")[0] # puzzle doesn't need this but may help for debugging
+        elif line:
+            data = [int(v) for v in line.split(" ") if v != ""]
+            map_data.append(data)
+    add_map()
+    for map in maps:
+        print(f"loaded map: {map.name}")
+    return (seeds, maps)
+
 def main():
     if len(sys.argv) < 2:
         test()
@@ -48,6 +76,17 @@ def main():
     with open(filename, "r") as f:
         raw_lines = f.readlines()
     lines = [r.strip() for r in raw_lines]
+    seeds, maps = parse_lines(lines)
+
+    locations = list()
+    for seed in seeds:
+        s = seed
+        for m in maps:
+            s = m.map(s)
+        locations.append(s)
+        print(f"{seed=}, location={s}")
+    
+    print(f"closest seed is {min(locations)}")
 
 if __name__=="__main__":
     main()
