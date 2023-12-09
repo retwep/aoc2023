@@ -96,9 +96,9 @@ def play_cards(hands):
 def parse_cards(handbids):
     hands = list()
     for h in handbids:
-        x = [v for v in h.split("") if v != ""]
+        x = [v for v in h.split(" ") if v != ""]
         cards = x[0]
-        bid = x[1]
+        bid = int(x[1])
         hand = Hand(cards, bid)
         hands.append(hand)
     return hands
@@ -149,6 +149,17 @@ def test():
     assert h5 == h5
     assert h3b != h3
     assert hp != h4
+
+    hands = parse_cards([" AAAAA   17  "])
+    assert len(hands) == 1
+    assert hands[0].category == FIVE_OF_A_KIND
+    assert hands[0].bid == 17
+    hands = parse_cards(["AKQJT 3", " 99977 9  "])
+    assert len(hands) == 2
+    assert hands[0].category == HIGHCARD
+    assert hands[0].bid == 3
+    assert hands[1].category == FULL_HOUSE
+    assert hands[1].bid == 9
 
     print("Test passed")
 
