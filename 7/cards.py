@@ -147,7 +147,7 @@ def test():
 
     assert h0 == h0
     assert h5 == h5
-    assert h3b != h3b
+    assert h3b != h3
     assert hp != h4
 
     print("Test passed")
