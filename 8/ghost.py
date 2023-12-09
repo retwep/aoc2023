@@ -2,8 +2,9 @@
 
 # part1 submission 1 12083
 
+from sympy import primefactors
 import sys
-from typing import Dict, List, Tuple
+from typing import Dict, List, Set, Tuple
 
 def navigate(turns:str, map:Dict[str,Dict[str,str]], forced = None) -> int:
     ghosts = [key for key in map.keys() if key.endswith("A")]
@@ -11,19 +12,62 @@ def navigate(turns:str, map:Dict[str,Dict[str,str]], forced = None) -> int:
         ghosts = forced
 
     print(f"There are {len(ghosts)} : {ghosts=}")
-    def done(ghosts):
-        return all(g.endswith("Z") for g in ghosts)
-    tm = len(turns)
-    count = 0
 
-    while not done(ghosts):
-        turn = turns[count % tm]
-        count += 1
-        for n in range(0, len(ghosts)):
-            ghosts[n] = map[ghosts[n]][turn]
-        #print(f"{count} : {ghosts=}")
-        
-    return count
+    tm = len(turns)
+    lengths = list()
+
+    # get the path length for each ghost's individual path
+    for g in ghosts:
+        ghost = g
+        count = 0
+        while not ghost.endswith("Z"):
+            turn = turns[count % tm]
+            count += 1
+            ghost = map[ghost][turn]
+        print(f"Ghost {g} path length is {count}")
+        lengths.append(count)
+    
+    # get prime factors for each path length
+    primes = list()
+    for i, l in enumerate(lengths):
+        p = primefactors(l)
+        print(f"ghost {ghosts[i]} has prime factors {p}")
+        primes.extend(primefactors(l))
+    
+    # dear reader, why is this done this way one at a time when the puzzle said at the same time?
+    # because it ends up being a modulo math problem where you have to wait for all of the paths
+    # to repeat at their own frequency until they all come up even.  This will happen at a number of
+    # repeats of the multiple of all prime factors of each.
+    # How many times must you iterate 3 and 5 before they both have a common multiple:
+    # [3]  [5]
+    #  1    1    
+    #  2    2
+    #  3Z   3
+    #  1    4
+    #  2    5Z
+    #  3Z   1
+    #  1    2
+    #  2    3
+    #  3Z   4
+    #  1    5Z
+    #  2    1
+    #  3Z   2
+    #  1    3
+    #  2    4
+    #  3Z   5Z
+
+    # maybe not correct for general case but works for this one:
+    primes = set(primes)
+    
+    # result is the product
+    def product(p: Set):
+        prod = 1
+        for i in p:
+            prod *= i
+        return prod
+    
+    return product(primes)
+
 
 def load_map(lines:List[str]) -> Tuple[str,Dict[str,Dict[str,str]]]:
     directions = lines[0]
@@ -69,7 +113,8 @@ def main():
         raw_lines = f.readlines()
     lines = [r.strip() for r in raw_lines]
     d,m = load_map(lines)
-    
+
+    """
     # ok, here's a major spoiler -- it was taking so long to finish that I started looking at what I can learn.
     # path length in single terms for each of the ghosts
     print(f"{navigate(d,m,['AAA'])}")
@@ -108,6 +153,7 @@ def main():
     # which if you multiply the prime factors together you get:
     print("The analytical answer is ", 43*47*79*61*67*73*281)
     # of course this was by hand and not by program, does that count?
+    """
 
     turns = navigate(d,m)
     print(f"map took {turns=}")
