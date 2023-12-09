@@ -144,6 +144,12 @@ def test():
     assert hp < hpb
     h0b = Hand("A2579",2)
     assert h0b < h0
+
+    assert h0 == h0
+    assert h5 == h5
+    assert h3b != h3b
+    assert hp != h4
+
     print("Test passed")
 
 def main():
