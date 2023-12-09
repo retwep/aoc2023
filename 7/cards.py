@@ -16,6 +16,7 @@ class Hand:
         self.cards = cards
         self.bid = bid
         self.category = self.rating()
+        self.rank = 0  # filled in later
 
     @staticmethod
     def card_value(c) -> int:
@@ -90,8 +91,21 @@ class Hand:
             return 1
         return 0
 
-def play_cards(hands):
-    pass
+def play_cards(hands) -> int:
+    def print_hands(title, hands):
+        print(title)
+        for h in hands:
+            print(f"{h.cards}, {h.bid=}, {h.rank=} ")
+
+    print_hands("unranked", hands)
+    sorted_hands = sorted(hands)
+    for i,v in enumerate(sorted_hands):
+        v.rank = i+1
+    print_hands("ranked", sorted_hands)
+    winnings = 0
+    for h in hands:
+        winnings += h.rank * h.bid
+    return winnings
 
 def parse_cards(handbids):
     hands = list()
