@@ -5,10 +5,33 @@ from typing import Dict, List, Tuple
 
 class Run:
     """This puzzle has multiple areas with a start and length, seeds, and translation ranges between domains."""
+
     def __init__(self, first, len):
         self.first = first
         self.len = len
         self.last = first+len-1 # inclusive, which isn't python typical
+    
+    # possible relationship between 2 runs:
+    DISJOINT=0  # no overlap
+    START_OVERLAP=1  # self.first is inside the run, but self.last is outside the run
+    END_OVERLAP=2  # self.fist is outside the run, but self.last is inside the run
+    CONTAINED=3  # self.first and self.last are both inside the run
+    INSIDE=4  # entire run is between self.first and self.last
+    def contains(self, run):
+        # result is relative to self.
+        if self.first > run.last or self.last < run.first:
+            return Run.DISJOINT
+
+        # this feels like it is too much - do I really need all this crap?
+        if run.first < self.first and run.last > self.last:
+            return Run.CONTAINED
+        if run.first < self.first and run.last <= self.last:
+            return Run.START_OVERLAP
+        if run.first >= self.first and run.last <= self.last:
+            return Run.INSIDE
+        if run.first >= self.first and run.last > self.last:
+            return Run.END_OVERLAP
+        assert False, "we should have hit it before here"
     
     def split(self, where) -> "Run":
         assert where > self.first, "you've got a bug -- should never split before the range"
@@ -18,10 +41,13 @@ class Run:
         self.len = where-self.first
         return new_run
 
-class Translation:  # translate from one number domain to the next
+class Translation:  # translate segment from one number domain to the next
     def __init__(self, dest: int, run:Run):
         self.dest = dest
         self.run = run
+
+    def translate(self, run:Run) ->List[Run]:
+        # Given a run of values, translate it
 
 
 class Domain:
@@ -30,11 +56,19 @@ class Domain:
         self.name = name
         self.maps = sorted(maps, key=lambda x:x.run.first) # later algos require the map list to be cleanly sorted.
 
-
     def translate(self, run: Run) -> List[Run]:
         # a run in, maybe more than one run out
 
         for map in self.maps:
+            # possible conditions:
+            # Disjoint (run and map don't overlap)
+            # rrr
+            #     mmm 
+            overlap = map.run.contains(run)
+            if overlap == Run.DISJOINT:
+                continue
+
+            # 
             dest = map[0]
             src = map[1]
             run = map[2]
@@ -107,7 +141,7 @@ def main():
     # part 2 treats seeds as a range of values - split them
     seeds = list()
     for s in range(0,len(sv), 2):
-        r = Run(sv[s], sv[s+1)
+        r = Run(sv[s], sv[s+1])
 
     locations = list()
     for seed in seeds:
