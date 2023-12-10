@@ -2,76 +2,42 @@
 import sys
 from typing import Dict, List, Tuple
 
-
 class Run:
-    """This puzzle has multiple areas with a start and length, seeds, and translation ranges between domains."""
-
-    def __init__(self, first, len):
-        self.first = first
+    def __init__(self, start, len):
+        self.start = start
         self.len = len
-        self.last = first+len-1 # inclusive, which isn't python typical
-    
-    # possible relationship between 2 runs:
-    DISJOINT=0  # no overlap
-    START_OVERLAP=1  # self.first is inside the run, but self.last is outside the run
-    END_OVERLAP=2  # self.fist is outside the run, but self.last is inside the run
-    CONTAINED=3  # self.first and self.last are both inside the run
-    INSIDE=4  # entire run is between self.first and self.last
-    def contains(self, run):
-        # result is relative to self.
-        if self.first > run.last or self.last < run.first:
-            return Run.DISJOINT
+        self.finish = start+len-1
 
-        # this feels like it is too much - do I really need all this crap?
-        if run.first < self.first and run.last > self.last:
-            return Run.CONTAINED
-        if run.first < self.first and run.last <= self.last:
-            return Run.START_OVERLAP
-        if run.first >= self.first and run.last <= self.last:
-            return Run.INSIDE
-        if run.first >= self.first and run.last > self.last:
-            return Run.END_OVERLAP
-        assert False, "we should have hit it before here"
-    
-    def split(self, where) -> "Run":
-        assert where > self.first, "you've got a bug -- should never split before the range"
-        assert where <= self.last, "you've got a bug -- should never split after the range"
-        new_len = self.len - (where-self.first)
-        new_run = Run(where, new_len)
-        self.len = where-self.first
-        return new_run
+    def inside(self, value):
+        return self.start <= value and self.finish >= value
 
-class Translation:  # translate segment from one number domain to the next
-    def __init__(self, dest: int, run:Run):
+class Translation:
+    def __init__(self, dest, run: Run): 
         self.dest = dest
-        self.run = run
+        self.run
 
-    def translate(self, run:Run) ->List[Run]:
-        # Given a run of values, translate it
+    @staticmethod
+    def sort(translations: List["Translation"]):
+        result = sorted(translations, key=lambda x:x.run.start)
+        return result
 
 
-class Domain:
-    """each src->dest mapping is a translation domain"""
+class Transformation:
     def __init__(self, name:str, maps:List[Translation] ):
         self.name = name
-        self.maps = sorted(maps, key=lambda x:x.run.first) # later algos require the map list to be cleanly sorted.
+        self.translations = maps
+        self.sort()
 
-    def translate(self, run: Run) -> List[Run]:
-        # a run in, maybe more than one run out
+    def sort(self):
+        for i,t in enumerate(self.translations):
+            s = Translation.sort(t)
+            self.translations[i] = s
 
-        for map in self.maps:
-            # possible conditions:
-            # Disjoint (run and map don't overlap)
-            # rrr
-            #     mmm 
-            overlap = map.run.contains(run)
-            if overlap == Run.DISJOINT:
-                continue
-
-            # 
-            dest = map[0]
-            src = map[1]
-            run = map[2]
+    def map(self, value:int) -> int:
+        for map in self.translations:
+            dest = map.dest
+            src = map.run.start
+            run = map.run.run
             if src <= value < (src+run):
                 dist = value - src
                 target = dest + dist
@@ -79,9 +45,18 @@ class Domain:
         return value
 
 
+    @staticmethod
+    def flatten_maps(transforms: List["Transformation"]):
+        for t in transforms:
+            # pairwise go through the transforms and combine them to create a single transform from input to output.
+            TODO: start here, take pairs of transforms and flatten them
+            
+
+
+
 def test():
 
-    map = Map("test1", [[100, 10, 10], [70, 30, 3]])
+    map = Transformation("test1", [[100, 10, 10], [70, 30, 3]])
     values = [
         (5,5),
         (10,100),
@@ -100,30 +75,37 @@ def test():
 
     print("Test passed")
 
-def parse_lines(lines:List[str]) -> Tuple[List[int], List[Map]]:
+def parse_lines(lines:List[str]) -> Tuple[List[int], List[Transformation]]:
     assert "seeds" in lines[0]
-    raw_seeds = lines[0].split(" ")
-    seeds = [int(v) for v in raw_seeds[1:] if v != ""]
+    raw_seeds = lines[0].split()
+    seeds = [int(v) for v in raw_seeds[1:]]
+
+    # part 2 treats seeds as a range of values - split them
+    seeds = list()
+    for s in range(0,len(sv), 2):
+        r = Run(sv[s], sv[s+1])
 
     maps = list()
-    map_data = list()
+    map_translations = list()
     name = ""
     def add_map():
-        nonlocal maps, name, map_data
-        if map_data:
-            map = Map(name, map_data)
+        nonlocal maps, name, map_translations
+        if map_translations:
+            map = Transformation(name, map_translations)
             maps.append(map)
-            map_data = list()
+            map_translations = list()
             name = ""
         
     for line in lines[1:]:
         if "map" in line:
             add_map()
-            name = line.split(" ")[0] # puzzle doesn't need this but may help for debugging
+            name = line.split()[0] # puzzle doesn't need this but may help for debugging
         elif line:
-            data = [int(v) for v in line.split(" ") if v != ""]
-            map_data.append(data)
+            raw = line.split()
+            t = Translation(raw[0], Run(raw[1], raw[2])) # will be too hard to think with flat [dest,src,len,dest,src,len,dest,src,len]
+            map_translations.append(t)
     add_map()
+
     for map in maps:
         print(f"loaded map: {map.name}")
     return (seeds, maps)
@@ -138,10 +120,8 @@ def main():
     lines = [r.strip() for r in raw_lines]
     sv, maps = parse_lines(lines)
 
-    # part 2 treats seeds as a range of values - split them
-    seeds = list()
-    for s in range(0,len(sv), 2):
-        r = Run(sv[s], sv[s+1])
+    # create a single translation mapping from multiple sub-mappings
+    flat = Transformation.flatten_maps(maps)
 
     locations = list()
     for seed in seeds:
