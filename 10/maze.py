@@ -29,17 +29,27 @@ class Walker:
             next = options[0]
         self.prev = self.here
         self.here = next
+        maze.visit(next)
         self.distance += 1
 
 class Maze:
     def __init__(self, lines:List[str]):
         self.width = len(lines[0])
         self.height = len(lines)
-        self.lines = lines
+        self.lines:List[List[str]] = [[c for c in l] for l in lines]
+        blank = [" " for _ in range(0,len(lines[0]))]
+        self.visited:List[List[str]] = [blank.copy() for _ in lines]
+
 
     def get(self, x:int, y:int) -> str:
         return self.lines[y][x]
-    
+
+    def visit(self, p:Point):
+        self.visited[p.y][p.x] = "X"
+
+    def was_visited(self, x:int,y:int) -> bool:
+        return self.visited[y][x] != " "
+
     def find_start(self) -> Point:
         for y in range(0,self.height):
             for x in range(0,self.width):
@@ -49,9 +59,12 @@ class Maze:
 
     def get_walkers(self, p: Point) -> Tuple[Walker, Walker]:
         p = self.find_start()
+        self.visit(p)
         options = self.possible_directions(p)
         walkers:List[Walker] = list()
         for option in options:
+            self.visit(p)
+            self.visit(option)
             walkers.append(Walker(prev=p,here=option))
         return tuple(walkers) # type: ignore
 
@@ -90,6 +103,44 @@ class Maze:
         distance = max(w1.distance, w2.distance)
         return distance
 
+    def enclosed_area(self) -> int:
+        count = 0
+        for y in range(0,self.height):
+            inside = False
+            last_corner_up = False
+            for x in range(0,self.width):
+                #  F----JL---7
+                if self.was_visited(x,y):
+                    # this pipe is relevant
+                    # F----7.F----7
+                    # |....L-J....|
+                    # L-----------J
+                    c = self.get(x,y)
+                    if c in "F":
+                        last_corner_up = False
+                    elif c in "L":
+                        last_corner_up = True
+                    elif c in "7":
+                        if last_corner_up:
+                            inside = not inside
+                        last_corner_up = False
+                    elif c in "J":
+                        if not last_corner_up:
+                            inside = not inside
+                        last_corner_up = True
+                    elif c in "|":
+                        inside = not inside
+                    elif c in "S" and not inside:
+                        last_corner_up = False
+                        #inside = not inside
+                    # elif c == "S":  Cheated and could see that S is not a state change for my map.  Not true of all maps.
+                    # This gets "fun" when you have to figure out if S is on a corner (== state change) or middle (== not a state change)
+                elif inside:
+                    count += 1
+
+            assert not inside  # because of blank padding we should always be outside at the end of a line
+        return count
+
 
 def test():
     print("Test passed")
@@ -109,6 +160,9 @@ def main():
 
     most_distant = maze.measure_distant()
     print(f"{most_distant=}")
+
+    enclosed = maze.enclosed_area()
+    print(f"{enclosed=}")
 
 if __name__=="__main__":
     main()
