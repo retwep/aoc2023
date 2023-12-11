@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from typing import Dict, List, Tuple
+from typing import List
 
 def row_is_empty(row: List[str]) -> bool:
     for x in row:
