@@ -15,17 +15,18 @@ def build_unknown_map(line: str) -> Tuple[int, List[int]]:
 
 
 def build_regex(pattern:List[int]) -> Any:
-    r = [".*"]
+    r = ["S*"]
     for n in pattern:
-        r.append(f"#{{{n}}}")
-    r.append(".*")
-    rstr = ".+".join(r)
+        r.append(f"X{{{n}}}")
+    r.append("S*")
+    rstr = "S+".join(r)
     reg = re.compile(rstr)
     return reg
 
 def valid_variation(fixme:str, pattern:List[int]) -> bool:
+    safe = fixme.replace('.','S').replace('#','X').replace('?','Q') # regex specials
     reg = build_regex(pattern)
-    found = bool(reg.fullmatch(fixme))
+    found = bool(reg.fullmatch(safe))
     return found
 
 def parse_spring_data(lines:List[str]) -> Tuple[List[str], List[List[int]]]:
@@ -33,7 +34,7 @@ def parse_spring_data(lines:List[str]) -> Tuple[List[str], List[List[int]]]:
     patterns:List[List[int]] = list()
     for line in lines:
         fm, pt = line.split()
-        fixmes.append(fm)
+        fixmes.append(f".{fm}.")
         patt:List[int] = [int(y) for y in pt.split(",")]
         patterns.append(patt)
     return fixmes, patterns
@@ -41,13 +42,14 @@ def parse_spring_data(lines:List[str]) -> Tuple[List[str], List[List[int]]]:
 def count_variations(fixme:str, pattern:List[int]) -> int:
     count:int = 0 
     bit_count, map = build_unknown_map(fixme)
+    safe = fixme.replace('.','S').replace('#','X').replace('?','Q') # regex specials
     reg = build_regex(pattern)
     # brute force - try every possible arrangement (this is way too big, but whaterver)
     for potential in range(0,pow(2,bit_count)):
-        bits = bin(potential)
-        cl = [c for c in fixme]
-        for i, c in enumerate(bits[2:]):
-            cl[map[i]] = "." if c=="0" else "#"
+        bits = f"{potential:0>32b}"[-bit_count:]
+        cl = [c for c in safe]
+        for i, c in enumerate(bits):
+            cl[map[i]] = "S" if c=="0" else "X"
         candidate = "".join(cl)
         if reg.fullmatch(candidate):
             count += 1
@@ -59,7 +61,12 @@ def test():
     assert not valid_variation(fixme=".#.", pattern=[3])
     assert not valid_variation(fixme=".##.", pattern=[1,1])
     
-    assert count_variations("???.###", [1,1,3]) == 1
+    cases = [(".???.###.", [1,1,3] ,1)]
+             
+    for case in cases:
+        v = count_variations(case[0], case[1])
+        print(f"{case=}, {v=}")
+        assert v == case[2]
 
     print("Test passed")
 
