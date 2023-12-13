@@ -27,13 +27,25 @@ def count_variations(fixme:str, pattern:List[int]) -> int:
         return 0
 
     # at this level of recursion, what is the last position this pattern can occupy before we can't fit the rest of the pattern.
-    # iterate from 0 to that last slot.
-    #   apply quantity of # and separator . at position - does it create a valid match?
-    #   if not, continue
-    #   if so,
-    #       trim the remaining fixme and pattern and recurse
-    #       if None, assume failure of recursion
-    #       if not None, sum the count
+    p = pattern[0]
+    overlay = "#"*p + "."
+    s = sum(pattern)+len(pattern)
+    maxlen = len(fixme) - s
+    i = 0
+    while i < maxlen: # iterate from 0 to that last slot.
+        # apply quantity of # and separator . at position - does it create a valid match?
+        for x in range(0,p):
+            if fixme[x+i] == "#" and overlay[x] != "#":
+                break
+            if fixme[x+i] == "." and overlay[x] != ".":
+                break
+            # if fixme[x+i] == "?" # don't care what overlay is.
+        else:
+            # we didn't break, so we have a match!
+            # trim the remaining fixme and pattern and recurse
+            # 
+# if None, assume failure of recursion
+# f not None, sum the count
     return count
 
 def test():
