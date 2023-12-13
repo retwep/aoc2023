@@ -50,7 +50,9 @@ def count_variations(fixme:str, pattern:List[int]) -> int:
     safe = fixme.replace('.','S').replace('#','X').replace('?','Q') # regex specials
     reg = build_regex(pattern)
     # brute force - try every possible arrangement (this is way too big, but whaterver)
-    for potential in range(0,pow(2,bit_count)):
+    brute_force = pow(2,bit_count)
+    print(f"{brute_force=}, {fixme=}, {pattern=}")
+    for potential in range(0,brute_force):
         bits = f"{potential:0>32b}"[-bit_count:]
         cl = [c for c in safe]
         for i, c in enumerate(bits):
