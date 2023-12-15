@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import sys
-from typing import Dict, List, Tuple, Union
+from typing import List, Union
 
 def parse_patterns(lines:List[str]) -> List[List[str]]:
     patterns:List[List[str]] = list()
@@ -94,8 +94,7 @@ def main():
         y = find_vertical_mirror(tpatt)
         if y is not None:
             horizontal += y+1
-
-
+        assert (x is None and y is not None) or (x is not None and y is None)
 
     print(f"{vertical=}, {horizontal=}, summary={vertical+100*horizontal}")
 
