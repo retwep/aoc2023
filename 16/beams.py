@@ -71,16 +71,46 @@ def trace_beam(grid:List[List[str]], map:List[List[int]], beams:List[Beam]):
             assert False, f"Unexpected character {c} at {beam.x}, {beam.y}"
 
 def trace_beams(grid:List[List[str]]) -> int:
-    map:List[List[int]] = [[0 for _ in l] for l in grid]
-    beam = Beam(x=-1, y=0, dx=1, dy=0)
-    beams:List[Beam] = [beam]
-    trace_beam(grid, map, beams)
-    count:int = 0
-    for row in map:
-        for col in row:
-            if col:
-                count += 1
-    return count
+    width = len(grid[0])
+    height = len(grid)
+    best = 0
+    def count_cells(map):
+        nonlocal best
+        count:int = 0
+        for row in map:
+            for col in row:
+                if col:
+                    count += 1
+        best = max(count, best)
+
+
+    for x in range(width):
+        map:List[List[int]] = [[0 for _ in l] for l in grid]
+        beam = Beam(x=x, y=-1, dx=0, dy=1)
+        beams:List[Beam] = [beam]
+        trace_beam(grid, map, beams)
+        count_cells(map)
+
+        map:List[List[int]] = [[0 for _ in l] for l in grid]
+        beam = Beam(x=x, y=height, dx=0, dy=-1)
+        beams:List[Beam] = [beam]
+        trace_beam(grid, map, beams)
+        count_cells(map)
+
+    for y in range(height):
+        map:List[List[int]] = [[0 for _ in l] for l in grid]
+        beam = Beam(x=-1, y=y, dx=1, dy=0)
+        beams:List[Beam] = [beam]
+        trace_beam(grid, map, beams)
+        count_cells(map)
+
+        map:List[List[int]] = [[0 for _ in l] for l in grid]
+        beam = Beam(x=width, y=y, dx=-1, dy=0)
+        beams:List[Beam] = [beam]
+        trace_beam(grid, map, beams)
+        count_cells(map)
+
+    return best
 
 def test():
     print("Test passed")
