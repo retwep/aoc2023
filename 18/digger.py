@@ -2,6 +2,11 @@
 import sys
 from typing import Dict, List, Tuple
 
+OUTSIDE=","
+BLANK="."
+WALL="#"
+FILL="X"
+MYSTERY="+"
 
 class DiggerMove:
     def __init__(self, direction:str, distance:int, color:str):
@@ -26,10 +31,10 @@ class DiggerMove:
     def dig(ground:List[List[str]], moves:List["DiggerMove"], startc:int, startr:int):
         row = startr
         col = startc
-        ground[row][col] = "#"
-        min_c = 1000
+        ground[row][col] = WALL
+        min_c = 10000
         max_c = -1
-        min_r = 1000
+        min_r = 10000
         max_r = -1
         for move in moves:
             for _step in range(move.distance):
@@ -45,11 +50,7 @@ class DiggerMove:
                 elif move.direction == "L":
                     col -= 1
                     min_c = min(col, min_c)
-                ground[row][col] = "#"
-                if ground[row][col-1] != "#":
-                    ground[row][col-1] = "L"
-                if ground[row][col+1] != "#":
-                    ground[row][col+1] = "R"
+                ground[row][col] = WALL
 
         # trim the ground to just what we used.  Very lazy and a high chance we'll blow chunks before we get here depending on the input data.
         ground = ground[min_r - 2: max_r+2]
@@ -66,42 +67,47 @@ class DiggerMove:
             outside = True
             for col in range(width):
                 g = ground[row][col]
-                if outside and g in "LR.":
-                    ground[row][col] = "O"
-                elif g == "#" and ground[row][col+1] == "#":
+                if outside and g in BLANK:
+                    ground[row][col] = OUTSIDE
+                elif g == WALL and ground[row][col+1] == WALL:
                     # mystery row -- we'll come back later if we hit these, for now, mark what we can easily.
                     mystery = True
                     j = width-1
-                    rout = True
-                    fill = "O"
+                    known = True
+                    outside = True
+                    fill = OUTSIDE
                     while j > col:
-                        if rout:
-                            if ground[row][j] == "#" and ground[row][j-1] == "#":
-                                fill = "M"
-                                rout = False
-                            elif ground[row][j] == "#" and ground[row][j-1] != "#":
-                                fill = "X"
+                        if known:
+                            if ground[row][j] == WALL and ground[row][j-1] == WALL:
+                                fill = MYSTERY
+                                known = False
+                            elif ground[row][j] == WALL and ground[row][j-1] != WALL:
+                                outside = not outside
+                                if outside:
+                                    fill = OUTSIDE
+                                else:
+                                    fill = FILL
                             else:  # clear solution to filling either outside or a simple line crossing
                                 ground[row][j] = fill
                         else:
-                            if ground[row][j] not in "X#O":
+                            if ground[row][j] not in [WALL,FILL,OUTSIDE]:
                                 # Mystery to be resolved later
                                 ground[row][j] = fill
                                 mystery = True
                         j -= 1
                     break  # we finished out this entire row already
                 elif outside:
-                    if g == "#":
+                    if g == WALL:
                         # clear line crossing
                         outside = False
                     else:
-                        ground[row][col] = "O"
+                        ground[row][col] = OUTSIDE
                 elif not outside:
-                    if g == "#":
+                    if g == WALL:
                         # clear line crossing
                         outside = True
                     else:
-                        ground[row][col] = "X"
+                        ground[row][col] = FILL
             print("".join(ground[row]))
 
         # trying something silly -- multipass fill -- if we don't know, skip it and come back later
@@ -115,12 +121,12 @@ class DiggerMove:
                     while col < width-1:
                         # no hints for crossings, so let's paint!
                         g = ground[row][col]
-                        if g == "M":
+                        if g == MYSTERY:
                             done = False
-                            if ground[row-1][col] == "X" or ground[row+1][col] == "X" or ground[row][col-1] == "X" or ground[row][col+1] == "X":
-                                ground[row][col] = "X"  # adjacency filling -- really likely to leave holes
-                            elif ground[row-1][col] == "O" or ground[row+1][col] == "O" or ground[row][col-1] == "O" or ground[row][col+1] == "O":
-                                ground[row][col] = "O"  # adjacency filling -- really likely to leave holes
+                            if FILL in [ground[row-1][col], ground[row+1][col], ground[row][col-1], ground[row][col+1]]:
+                                ground[row][col] = FILL  # adjacency filling -- really likely to leave holes
+                            elif OUTSIDE in [ground[row-1][col], ground[row+1][col], ground[row][col-1], ground[row][col+1]]:
+                                ground[row][col] = OUTSIDE  # adjacency filling -- really likely to leave holes
                         col += 1
                     print("".join(ground[row]))
         return ground
@@ -145,7 +151,7 @@ def main():
         moves.append(dm)
 
     width, height = DiggerMove.estimate_hole(moves)
-    ground = [["." for _w in range(width)] for _h in range(height)]
+    ground = [[BLANK for _w in range(width)] for _h in range(height)]
     ground = DiggerMove.dig(ground, moves, width//2, height//2)
     count = 0
     for r in ground:
@@ -153,7 +159,7 @@ def main():
             if c in "X#":
                 count += 1
             else:
-                assert c in "LR.O"
+                assert c in [OUTSIDE]
     print(f"Found {count} blocks")
 
 
